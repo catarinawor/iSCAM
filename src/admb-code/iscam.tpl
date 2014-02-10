@@ -194,6 +194,7 @@ DATA_SECTION
 	int mseFlag;  ///< Flag for management strategy evaluation mode
 	int rseed;    ///< Random number seed for simulated data.
 	int retro_yrs;///< Number of years to look back from terminal year.
+	int NewFiles;
 	LOC_CALCS
 		SimFlag=0;
 		rseed=999;
@@ -209,9 +210,11 @@ DATA_SECTION
 		
 		// Catarina implementing a new command for generating new data control and pfc file
 		// for a new project.
+		NewFiles = 0;
 		if((on=option_match(ad_comm::argc,ad_comm::argv,"-new",opt))>-1)
 		{
-			//generate_new_files();
+			NewFiles = 1;
+			NewFileName = ad_comm::argv[on+1];
 		}
 
 
@@ -1358,8 +1361,15 @@ PRELIMINARY_CALCS_SECTION
 		
 		simulationModel(rseed);
 	}
+	
+	if (NewFiles)
+	{
+		generate_new_files();	
+	}
+	
 	if(verbose) cout<<"||-- END OF PRELIMINARY_CALCS_SECTION --||"<<endl;
 	
+
 
 RUNTIME_SECTION
     maximum_function_evaluations 100,  200,   500, 25000, 25000
@@ -4549,16 +4559,26 @@ REPORT_SECTION
 // 	// cout<<"Ok to here"<<endl;
 //   }
 	
-// FUNCTION generate_new_files
-//   {
-//   	ofstream ofs("Datafile.dat");
-//   		ofs <<"# Model dimensions"<<endl;
-  		
+FUNCTION generate_new_files
+   {
 
-//   	ofstream cfs("ControlFile.ctl");
+   	ofstream rd("RUN.dat");
+		rd<<NewFileName + ".dat"<<endl;
+		rd<<NewFileName + ".ctl"<<endl;
+		rd<<NewFileName + ".pfc"<<endl;
 
-//   	ofstream pfs("ProjectionFile.pfs");
-//   }
+
+
+	adstring bscmddat = "cp ../lib/iscam.dat" + NewFileName +".dat";
+		system(bscmddat);
+
+	adstring bscmdctl = "cp ../lib/ iscam.ctl" + NewFileName +".ctl";
+		system(bscmdctl);
+
+	adstring bscmdpfc = "cp ../lib/ iscam.PFC" + NewFileName +".pfc";
+		system(bscmdpfc);	
+
+  }
 
 FUNCTION mcmc_output
 //   {
@@ -5032,7 +5052,7 @@ GLOBALS_SECTION
 	
 	adstring BaseFileName;
 	adstring ReportFileName;
-	
+	adstring NewFileName;
 
 	adstring stripExtension(adstring fileName)
 	{
