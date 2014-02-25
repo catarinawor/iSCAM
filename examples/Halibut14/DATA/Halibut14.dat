@@ -13,13 +13,13 @@
 ## ------------------------------------------------------------------------- ##
 ## MODEL DIMENSIONS                                                          ##
 ## ------------------------------------------------------------------------- ##
-1       # -number of areas            (narea)
+1        # -number of areas            (narea)
 1        # -number of groups or stocks (ngroup)
 2        # -number of sexes            (nsex)
 1888     # -first year of data         (syr)
 2013     # -last year of data          (nyr)
 0        # -age of youngest age class  (sage)
-25        # -age of plus group          (nage)
+30        # -age of plus group          (nage)
 6        # -number of gears            (ngear)
 ##
 ## ------------------------------------------------------------------------- ##
@@ -42,8 +42,8 @@
 3.24         3.24         # -power parameter in length-weight allometry
 10.91       1000.       # -age at 50% maturity (approx with log(3.0)/k)
 1.406       1.406      # -std at 50% maturity (CV ~ 0.1)
-26       #flag mat vec
-0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.117 0.189 0.290 0.418 0.557 0.689 0.795 0.872 0.923 0.955 0.974 0.985 1.000 1.000 1.000 1.000 1.000 1.000		#mat vec
+31       #flag mat vec
+0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.117 0.189 0.290 0.418 0.557 0.689 0.795 0.872 0.923 0.955 0.974 0.985 1.000 1.000 1.000 1.000 1.000 1.000	1.000 1.000 1.000 1.000 1.000	#mat vec
 ##
 ## ------------------------------------------------------------------------- ##
 ## TIME SERIES DATA                                                          ##
