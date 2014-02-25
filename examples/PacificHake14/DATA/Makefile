@@ -7,7 +7,7 @@
 EXEC=iscam
 prefix=../../../dist
 DAT=RUN.dat
-CTL=ControlTemplate
+CTL=PacificHake14
 ARG=
 MCFLAG=-mcmc 10000 -mcsave 100 -nosdmcmc
 NR=4

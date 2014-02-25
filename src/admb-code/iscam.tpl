@@ -417,6 +417,8 @@ DATA_SECTION
 	init_vector     d_b(1,n_ags);
 	init_vector    d_ah(1,n_ags);
 	init_vector    d_gh(1,n_ags);
+	init_int 		n_MAT;
+	init_vector 	d_maturityVector(1,n_MAT);
 	
 	matrix la(1,n_ags,sage,nage);		//length-at-age
 	matrix wa(1,n_ags,sage,nage);		//weight-at-age
@@ -440,7 +442,15 @@ DATA_SECTION
 	  	{
 	  		la(ig) = d_linf(ig)*(1. - exp(-d_vonbk(ig)*(age-d_to(ig))));
 	  		wa(ig) = d_a(ig) * pow(la(ig),d_b(ig));
-	  		ma(ig) = plogis(age,d_ah(ig),d_gh(ig));
+
+	  		if(n_MAT==0)
+	  		{
+	  			ma(ig) = plogis(age,d_ah(ig),d_gh(ig));
+	  		}
+	  		else if(n_MAT>0)
+	  		{
+	  			ma(ig) = d_maturityVector;
+	  		}
 	  	}
 	END_CALCS
 	
