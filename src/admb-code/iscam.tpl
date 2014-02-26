@@ -729,9 +729,9 @@ DATA_SECTION
 			}
 			d3_wt_dev(ig) = trans(mtmp);
 		
-			
 			if( min(d3_wt_avg(ig))<=0.000 && min(d3_wt_avg(ig))!=NA )
 			{
+				COUT(min(d3_wt_avg(ig)));
 				cout<<"|-----------------------------------------------|"<<endl;
 				cout<<"| ERROR IN INPUT DATA FILE FOR MEAN WEIGHT DATA |"<<endl;
 				cout<<"|-----------------------------------------------|"<<endl;
@@ -1693,6 +1693,7 @@ FUNCTION void calcSelectivities(const ivector& isel_type)
 						p1 = mfexp(sel_par(k,bpar,1));
 						p2 = mfexp(sel_par(k,bpar,2));
 						log_sel(k)(ig)(i) = log( plogis<dvar_vector>(age,p1,p2)+tiny );
+						cout<< bpar<<endl;
 					}
 					break;
 				
