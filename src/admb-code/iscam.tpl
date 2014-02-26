@@ -418,7 +418,21 @@ DATA_SECTION
 	init_vector    d_ah(1,n_ags);
 	init_vector    d_gh(1,n_ags);
 	init_int 		n_MAT;
-	init_vector 	d_maturityVector(1,n_MAT);
+	int t1;
+	int t2;
+	LOC_CALCS
+		if(n_MAT)
+		{
+			t1 = sage;
+			t2 = nage;
+		}
+		else
+		{
+			t1 = 0;
+			t2 = 0;
+		}
+	END_CALCS 
+	init_vector 	d_maturityVector(t1,t2);
 	
 	matrix la(1,n_ags,sage,nage);		//length-at-age
 	matrix wa(1,n_ags,sage,nage);		//weight-at-age
@@ -484,6 +498,7 @@ DATA_SECTION
 		cout<<dCatchData.sub(nCtNobs-3,nCtNobs)<<endl;
 		cout<<"| ----------------------- |\n"<<endl;
 		d3_Ct.initialize();
+		
 		for(int ii=1;ii<=nCtNobs;ii++)
 		{
 			i = dCatchData(ii)(1);
@@ -504,8 +519,8 @@ DATA_SECTION
 				ig = pntr_ags(f,g,h);
 				d3_Ct(ig)(i)(k) = dCatchData(ii)(7);
 			} 
+			//if(verbose)  cout<<"Ok after reading catch data"<<ii<<" "<<ig <<" "<<n_ags<<endl;
 		}
-		
 	END_CALCS
 	
 
@@ -714,13 +729,14 @@ DATA_SECTION
 			}
 			d3_wt_dev(ig) = trans(mtmp);
 		
-			if( min(d3_wt_avg(ig))<=0 && min(d3_wt_avg(ig))!=NA )
+			
+			if( min(d3_wt_avg(ig))<=0.000 && min(d3_wt_avg(ig))!=NA )
 			{
 				cout<<"|-----------------------------------------------|"<<endl;
 				cout<<"| ERROR IN INPUT DATA FILE FOR MEAN WEIGHT DATA |"<<endl;
 				cout<<"|-----------------------------------------------|"<<endl;
-				cout<<"| - Cannont have an observed mean weight-at-age |"<<endl;
-				cout<<"|   less than or equal to 0.  Please fix. "       <<endl;
+				cout<<"| - Cannot have an observed mean weight-at-age  |"<<endl;
+				cout<<"|   less than or equal to 0.  Please fix.       |"<<endl;
 				cout<<"| - You are permitted to use '-99.0' for missing|"<<endl;
 				cout<<"|   values in your weight-at-age data.          |"<<endl;
 				cout<<"| - Aborting program!                           |"<<endl;
