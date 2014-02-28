@@ -628,15 +628,14 @@ DATA_SECTION
 
 	init_int nWtNobs;
 	init_matrix inp_wt_avg(1,nWtNobs,sage-5,nage);
-	
 	matrix  dWt_bar(1,n_ags,sage,nage);
 	3darray d3_wt_avg(1,n_ags,syr,nyr+1,sage,nage);
 	3darray d3_wt_dev(1,n_ags,syr,nyr+1,sage,nage);
 	3darray d3_wt_mat(1,n_ags,syr,nyr+1,sage,nage);
 	3darray d3_len_age(1,n_ags,syr,nyr+1,sage,nage);
-// 	vector fa_bar(sage,nage);				//average fecundity-at-age for all years.
-// 	vector avg_fec(sage,nage);				//average fecundity-at-age
-// 	vector avg_wt(sage,nage);				//average weight-at-age
+	// 	vector fa_bar(sage,nage);				//average fecundity-at-age for all years.
+	// 	vector avg_fec(sage,nage);				//average fecundity-at-age
+	// 	vector avg_wt(sage,nage);				//average weight-at-age
 	LOC_CALCS
 		d3_wt_avg.initialize();
 		d3_wt_dev.initialize();
@@ -728,7 +727,9 @@ DATA_SECTION
 				}
 			}
 			d3_wt_dev(ig) = trans(mtmp);
-		
+			
+
+
 			if( min(d3_wt_avg(ig))<=0.000 && min(d3_wt_avg(ig))!=NA )
 			{
 				COUT(min(d3_wt_avg(ig)));
@@ -1693,7 +1694,6 @@ FUNCTION void calcSelectivities(const ivector& isel_type)
 						p1 = mfexp(sel_par(k,bpar,1));
 						p2 = mfexp(sel_par(k,bpar,2));
 						log_sel(k)(ig)(i) = log( plogis<dvar_vector>(age,p1,p2)+tiny );
-						cout<< bpar<<endl;
 					}
 					break;
 				
