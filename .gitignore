@@ -71,6 +71,9 @@
 #Doxygen directory#
 html/
 
+#Jekyll directory
+
+
 
 # OS generated files #
 ######################
