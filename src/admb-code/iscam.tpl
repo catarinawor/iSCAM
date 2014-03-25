@@ -144,7 +144,7 @@ DATA_SECTION
 	/// | ReportFileName         : file name to copy report file to.
 	!! ReportFileName = BaseFileName + adstring(".rep");
 	!! cout<<BaseFileName<<endl;
-	// Hi chris
+	
 	
 	// |---------------------------------------------------------------------------------|
 	// | READ IN PROJECTION FILE CONTROLS                                         
@@ -707,7 +707,10 @@ DATA_SECTION
 			}
 			else if( !h ) 
 			{
+<<<<<<< HEAD
 
+=======
+>>>>>>> 51bab438b344dafb668e0b0ec4285fb7e6ab56b9
 					//cout<<h<<endl;
 				
 				for(int h=1;h<=nsex;h++)
@@ -1827,7 +1830,8 @@ FUNCTION void calcSelectivities(const ivector& isel_type)
 						dvector len = pow(d3_wt_avg(ig)(i)/d_a(ig),1./d_b(ig));
 
 						log_sel(kgear)(ig)(i) = log( plogis<dvar_vector>(len,p1,p2) );
-					}
+						//log_sel(kgear)(ig)(i) = log( plogis(len,p1,p2) );
+					}	cout<<"Death star is approaching"<<endl;
 					break;
 					
 				case 12: // cubic spline length-based coefficients.
@@ -2116,11 +2120,10 @@ FUNCTION calcAgeComposition
 	  		f = d3_A(kk)(ii)(n_A_sage(kk)-3);
 	  		g = d3_A(kk)(ii)(n_A_sage(kk)-2);
 	  		h = d3_A(kk)(ii)(n_A_sage(kk)-1);
-	  		
 	  		// | trap for retrospecitve analysis.
 	  		if(i > nyr) continue;
 
-	  		if( h )
+	  		if( h )  // age comps are sexed (h > 0)
 	  		{
 				ig = pntr_ags(f,g,h);
 				va = mfexp(log_sel(k)(ig)(i));
@@ -2129,7 +2132,7 @@ FUNCTION calcAgeComposition
 				na = N(ig)(i);
 				if( ft(ig)(k)(i)==0 )
 				{
-					ca = elem_prod(na,0.5*sa);
+					ca = elem_prod(elem_prod(na,va),0.5*sa);
 				}
 				else
 				{
@@ -2144,7 +2147,7 @@ FUNCTION calcAgeComposition
 					A_hat(kk)(ii)(n_A_nage(kk)) += sum( ca(n_A_nage(kk)+1,nage) );
 				}
 	  		}
-	  		else if( !h )
+	  		else if( !h )  // age-comps are unsexed
 	  		{
 	  			for(h=1;h<=nsex;h++)
 	  			{
@@ -4303,7 +4306,7 @@ REPORT_SECTION
 	// |
 	if( last_phase() )
 	{
-		//calcReferencePoints();
+		calcReferencePoints();
 		cout<<"Finished calcReferencePoints"<<endl;
 		//exit(1);
 		REPORT(bo);
@@ -4932,12 +4935,21 @@ GLOBALS_SECTION
 	#include "lib/msy.hpp"
 	#include "lib/baranov.h"
     #include "lib/LogisticNormal.h"
+<<<<<<< HEAD
   	#include "Selex.h"
  //	#include "lib/msy.cpp"
  //	#include "lib/baranov.cpp"
  //	#include "lib/LogisticNormal.cpp"
  //  #include "lib/LogisticStudentT.cpp"
 	#include "OpMod.h"
+=======
+	#include "Selex.h"
+	//#include "lib/msy.cpp"
+	//#include "lib/baranov.cpp"
+	//#include "lib/LogisticNormal.cpp"
+	//#include "lib/LogisticStudentT.cpp"
+	//#include "OpMod.h"
+>>>>>>> 51bab438b344dafb668e0b0ec4285fb7e6ab56b9
 
 	ivector getIndex(const dvector& a, const dvector& b)
 	{
