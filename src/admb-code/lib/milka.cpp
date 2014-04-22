@@ -1013,7 +1013,12 @@ void OperatingModel::writeDataFile(const int& iyr)
 		{			
 			
 			tmp_d3_inp_wt_avg(k)= m_d3_inp_wt_avg(k).sub(1,tmp_nWtNobs(k)) ;
-			tmp_d3_inp_wt_avg(k)(1)(sage-5) = fabs(tmp_d3_inp_wt_avg(k)(1)(sage-5))*projwt(k);
+
+			for(int j=1;j<=abs(projwt(k));j++)
+			{
+				tmp_d3_inp_wt_avg(k)(j)(sage-5) = fabs(tmp_d3_inp_wt_avg(k)(j)(sage-5))*(-1);
+				
+			}
 		}
 
 	  	dfs<< nWtTab 					<<endl;

@@ -776,6 +776,14 @@ DATA_SECTION
 	 					xinp_wt_avg(k)(jj)(sage-5,nage) = d3_inp_wt_avg(k)(jj)(sage-5,nage);
 	 				}
 				}
+
+				int ttmp =	sum(tmp_nWtNobs(1,k-1));
+				int ttmp2 =	sum(tmp_nWtNobs(1,k));
+
+				for(int jj=ttmp+1; jj<=ttmp2; jj++) 
+				{
+				xxinp_wt_avg(jj)(sage-5,nage) = xinp_wt_avg(k)(jj-ttmp)(sage-5,nage);
+				}
 			}
 		}
 
