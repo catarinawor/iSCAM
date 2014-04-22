@@ -680,8 +680,9 @@ DATA_SECTION
 	
 	vector tmp_nWtNobs(1,nWtTab);
 	int sum_tmp_nWtNobs; 
+	vector n_bf_wt_line(1,nWtTab);
 	vector projwt(1,nWtTab);
-
+	
 
 
 	LOC_CALCS		
@@ -691,24 +692,39 @@ DATA_SECTION
 		*/
 		
 		projwt.initialize();
-
-		for(int ii=1; ii<=nWtTab; ii++)
-		{
-			if(nWtNobs(ii) > 0 && d3_inp_wt_avg(ii)(1)(sage-5) < 0)
-			{
-				int exp_nyr = fabs(d3_inp_wt_avg(ii,1,sage-5))-syr; 
-				tmp_nWtNobs(ii) = nWtNobs(ii)+exp_nyr;
-				projwt(ii)=-1;
-			}
-			else if (nWtNobs(ii) > 0)
-			{
-				tmp_nWtNobs(ii) = nWtNobs(ii);
-				projwt(ii)=1;
-			}
-		}
-		sum_tmp_nWtNobs = sum(tmp_nWtNobs);		
+		n_bf_wt_line.initialize();
 		
 
+		for(int k=1; k<=nWtTab; k++)
+		{
+
+			tmp_nWtNobs(k) = nWtNobs(k);
+			projwt(k)=1;
+
+			for(i=1; i<=nWtNobs(k); i++)
+			{
+				if(nWtNobs(k) > 0 && d3_inp_wt_avg(k)(i)(sage-5) < 0)
+				{
+					n_bf_wt_line(k)++ ;
+				}
+
+				projwt(k)=-n_bf_wt_line(k);
+			}		
+
+			if(n_bf_wt_line(k)>0)
+			{
+				for(int ii=1;ii<=n_bf_wt_line(k); ii++ )
+				{
+					int exp_nyr = fabs(d3_inp_wt_avg(k,ii,sage-5))-syr; 
+					tmp_nWtNobs(k) += exp_nyr;
+				}											
+
+			}
+		}
+
+		sum_tmp_nWtNobs = sum(tmp_nWtNobs);	
+
+		
 	END_CALCS
 
 		3darray xinp_wt_avg(1,nWtTab,1,tmp_nWtNobs,sage-5,nage);
@@ -716,8 +732,6 @@ DATA_SECTION
 
 	LOC_CALCS
 
-		xinp_wt_avg.initialize();
-		xxinp_wt_avg.initialize();
 
 		/*
 		  This will redimension the d3_inp_wt_avg  according to tmp_nWtNobs and rename 
@@ -725,44 +739,48 @@ DATA_SECTION
 		  xxinp_wt_avg 
 		*/
 
+		xinp_wt_avg.initialize();
+		xxinp_wt_avg.initialize();
 
-  		for(int ii=1; ii<=nWtTab; ii++)
+  		for(int k=1; k<=nWtTab; k++)
 		{
-		if(nWtNobs(ii) > 0)
-		{
-  			if(d3_inp_wt_avg(ii,1,sage-5) < 0)
-			{
-	 			d3_inp_wt_avg(ii,1,sage-5) = fabs(d3_inp_wt_avg(ii,1,sage-5));
-				int exp_nyr = d3_inp_wt_avg(ii,1,sage-5)-syr;
-			
-				for(int jj=exp_nyr;jj>=1;jj--)
-	 			{
-	 				xinp_wt_avg(ii)(jj)(sage-5) = syr+jj-1 ;
-	 				xinp_wt_avg(ii)(jj)(sage-4,nage) = d3_inp_wt_avg(ii)(1)(sage-4,nage);
-	 			}
-			
-				for(int jj = exp_nyr+1; jj <= tmp_nWtNobs(ii); jj++)
-	 			{
-	 				xinp_wt_avg(ii)(jj)(sage-5,nage) = d3_inp_wt_avg(ii)(jj-exp_nyr)(sage-5,nage);
-	 			}
-	 		}
-	 		else
-	 		{
-				for(int jj = 1; jj <= tmp_nWtNobs(ii); jj++)
-	 			{
-	 				xinp_wt_avg(ii)(jj)(sage-5,nage) = d3_inp_wt_avg(ii)(jj)(sage-5,nage);
-	 			}
-			}
+			ivector iroww(0,n_bf_wt_line(k));
+			iroww.initialize();
 		
-			int ttmp =	sum(tmp_nWtNobs(1,ii-1));
-			int ttmp2 =	sum(tmp_nWtNobs(1,ii));
+			if(nWtNobs(k) > 0)
+			{		
+				if(n_bf_wt_line(k) > 0)
+				{
+					for(i=1; i<=n_bf_wt_line(k); i++)
+					{
+						d3_inp_wt_avg(k,i,sage-5) = fabs(d3_inp_wt_avg(k,i,sage-5));
+						iroww(i) = d3_inp_wt_avg(k,i,sage-5)-syr+iroww(i-1);
+						
+						for(int jj=iroww(i);jj>=iroww(i-1)+1;jj--)
+	 					{
+	 						xinp_wt_avg(k)(jj)(sage-5) = syr+jj-iroww(i-1)-1 ;
+	 						xinp_wt_avg(k)(jj)(sage-4,nage) = d3_inp_wt_avg(k)(i)(sage-4,nage);
 
-			for(int jj=ttmp+1; jj<=ttmp2; jj++) 
-			{
-				xxinp_wt_avg(jj)(sage-5,nage) = xinp_wt_avg(ii)(jj-ttmp)(sage-5,nage);
+	 					}
+					}	
+						for(int jj = iroww(n_bf_wt_line(k))+1; jj <= tmp_nWtNobs(k); jj++)
+	 					{
+	 						xinp_wt_avg(k)(jj)(sage-5,nage) = d3_inp_wt_avg(k)(jj-iroww(n_bf_wt_line(k)))(sage-5,nage);
+	 					}
+					
+				}
+				else
+	 			{
+					for(int jj = 1; jj <= tmp_nWtNobs(k); jj++)
+	 				{
+	 					xinp_wt_avg(k)(jj)(sage-5,nage) = d3_inp_wt_avg(k)(jj)(sage-5,nage);
+	 				}
+				}
 			}
 		}
-		}
+
+		
+	 							
 	END_CALCS
 
 	matrix  dWt_bar(1,n_ags,sage,nage);
@@ -813,10 +831,11 @@ DATA_SECTION
 			f   = xxinp_wt_avg(i,sage-3);
 			g   = xxinp_wt_avg(i,sage-2);
 			h   = xxinp_wt_avg(i,sage-1);
-
+			cout<<"h is: "<<h<<endl;
 		// | SM Changed Sept 9, to accomodate NA's (-99) in empirical data.
 			if( h )
 			{
+			cout<<"chegou aqui"<<endl;
 				ig                   = pntr_ags(f,g,h);
 				dvector tmp          = xxinp_wt_avg(i)(sage,nage);
 				ivector idx          = getIndex(age,tmp);
