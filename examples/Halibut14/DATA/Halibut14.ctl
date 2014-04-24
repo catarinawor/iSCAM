@@ -102,7 +102,7 @@
 ## ------------------------------------------------------------------------- ##
 ## OTHER MISCELANEOUS CONTROLS                                               ##
 ## ------------------------------------------------------------------------- ##
-0         # 1  -verbose ADMB output (0=off, 1=on)
+1         # 1  -verbose ADMB output (0=off, 1=on)
 1         # 2  -recruitment model (1=beverton-holt, 2=ricker)
 0.15      # 3  -std in observed catches in first phase.
 0.07      # 4  -std in observed catches in last phase.
@@ -115,7 +115,7 @@
 0.1       # 11 -std in deviations for natural mortality
 12        # 12 -number of estimated nodes for deviations in natural mortality
 0.50      # 13 -fraction of total mortality that takes place prior to spawning
-93         # 14 -switch for age-composition likelihood (1=dmvlogistic,2=dmultinom)
+90         # 14 -switch for age-composition likelihood (1=dmvlogistic,2=dmultinom)
 0         # 15 -switch for IFD distribution in selectivity simulations
 ##
 ## ------------------------------------------------------------------------- ##

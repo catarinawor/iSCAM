@@ -843,7 +843,6 @@ DATA_SECTION
 		// | SM Changed Sept 9, to accomodate NA's (-99) in empirical data.
 			if( h )
 			{
-			cout<<"chegou aqui"<<endl;
 				ig                   = pntr_ags(f,g,h);
 				dvector tmp          = xxinp_wt_avg(i)(sage,nage);
 				ivector idx          = getIndex(age,tmp);
