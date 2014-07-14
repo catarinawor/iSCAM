@@ -508,14 +508,20 @@ void OperatingModel::getReferencePointsAndStockStatus(const int& iyr)
     switch( int(m_nAssessOpt) ) // option read in from .mpc file
     {
         case 0:
-            //  set reference points to true milka values
-            
+            /*  set reference points to true milka values
+             This is icorrect, MSY reference values must be recalculated 
+            every year, that happens because MSY will change if selectivity 
+            schedules change or natural mortality changes
+            Need to figure out a way to use the iSCAM function calcReferencePoints()
+            */
+
+
             m_est_bo = m_dBo;
             m_est_fmsy = fmsy;
             m_est_msy = msy;
             m_est_bmsy = bmsy;
             m_est_sbtt = m_sbt(iyr)(1,ngroup);
-            m_est_btt = m_bt(iyr)(1,ngroup);;
+            m_est_btt = m_bt(iyr)(1,ngroup);
             
             for(int ig = 1; ig <= n_ags; ig++ )
             {
