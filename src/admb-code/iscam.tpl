@@ -1,6 +1,6 @@
 /// @file iscam.tpl
 /// @author Steve Martell, IPHC
-/// ssh desktop info: ssh stevemartell@192.168.100.114
+
 ///
 /// \def REPORT(object)
 /// \brief Prints name and value of \a object on ADMB report %ofstream file.
@@ -526,8 +526,12 @@ DATA_SECTION
 
 	LOC_CALCS
 		ft_count = nCtNobs;
+		 cout<<"ma is "<<ma <<endl;
+		 cout<<"nCtNobs is "<<nCtNobs <<endl;
+
 		if(!mseFlag && verbose)
 		{
+		cout<<"| ----------------------- |"<<endl;
 		cout<<"| ----------------------- |"<<endl;
 		cout<<"| HEAD(dCatchData)        |"<<endl;
 		cout<<"| ----------------------- |"<<endl;
@@ -974,7 +978,10 @@ DATA_SECTION
 		cout<<"|___________________________|"<<endl;
 		}
 	  }else{
-		cout<<"\n *** ERROR READING DATA *** \n"<<endl; exit(1);
+		cout<<"\n *** ERROR READING DATA *** \n"<<endl; 
+		cout<<"|         eof = "<<eof<<"         |"<<endl;
+		cout<<"|___________________________|"<<endl;
+		exit(1);
 	  }
 	END_CALCS
 
@@ -1955,6 +1962,7 @@ PROCEDURE_SECTION
 	calcStockRecruitment();
 	
 	calcObjectiveFunction();
+
 
 
 	if(sd_phase())
@@ -4264,7 +4272,6 @@ FUNCTION void testMSYxls()
 	dvector akmsy = c_MSYk.getFmsy(dftry);
 	c_MSYk.print();
 
-	exit(1);
 
 
 
