@@ -1762,6 +1762,7 @@ PARAMETER_SECTION
     // |
 	number m_bar;	///< Average natural mortality rate.			
 	number phib;//,so,beta;
+	
 
 	// |---------------------------------------------------------------------------------|
 	// | POPULATION VECTORS
@@ -1783,8 +1784,11 @@ PARAMETER_SECTION
     // | - varphi      -> Total precision of CPUE and Recruitment deviations.
     // | - sig         -> DEPRCATE. STD of the observation errors in relative abundance data.
     // | - tau         -> STD of the process errors (recruitment deviations).
+	// | - phiE 	   -> per recruit yield at unfished equilibrium -- analogous to phib but group-specific
+ 	// | - phie 	   -> per recruit yield at fished conditions -- 
+	// | - spr 		   ->
 	// |
-	 
+
 	vector        ro(1,ngroup);
 	vector        bo(1,ngroup);
 	vector       sbo(1,ngroup);
@@ -1804,6 +1808,9 @@ PARAMETER_SECTION
 	vector     sig(1,ngroup);	
 	vector     tau(1,ngroup);
   	vector sigma_r(1,ngroup); 
+  	vector phie(1,ngroup);
+	vector phiE(1,ngroup);
+	vector spr(1,ngroup);
 	
 	// |---------------------------------------------------------------------------------|
 	// | MATRIX OBJECTS
@@ -5084,11 +5091,16 @@ REPORT_SECTION
 		cout<<"Calculating MSY-based reference points"<<endl;
 		calcReferencePoints();
 		cout<<"Finished calcReferencePoints"<<endl;
+
+		cout<<"Calculating SPR current"<<endl;
+		calcSpr();
+		cout<<"Finished calcSpr"<<endl;
 		//exit(1);
 		REPORT(bo);
 		REPORT(fmsy);
 		REPORT(msy);
 		REPORT(bmsy);
+		REPORT(spr);
 		// REPORT(Umsy);
 	}
 
@@ -5206,13 +5218,171 @@ FUNCTION mcmc_output
 	 * used as a proxy for the annual total mortality rate relative to the
 	 * unfished conditions.
 	 */
-FUNCTION calcSPR
 
-
+FUNCTION void calcSprTarget(double fbar)
 	/**
-	 * @brief Run the Management Strategy Evaluation routine
-	 * @details [long description]
+	 * @brief Calculate the F that will lead to an SPR ratio (SPRcurrent/SPFunfished) equal to SPR target
+	 * @details This routine require that the allocation between gears is set before the assessment model is run
 	 */
+
+	//dvector fbar(1,4001);
+	//fbar.fill_seqadd(0,0.01);
+
+	int iter,g,f,h,ig;
+	dvector lambda(1,ngear);
+	dvector lamt(1,ngear);
+	
+	dvector 	va(sage,nage);
+	dvector 	ma(sage,nage);
+	dvector 	za(sage,nage);
+	dvector 	sa(sage,nage);
+	dvector 	oa(sage,nage);
+	dvector 	fe(sage,nage);
+	dvector 	fa(sage,nage);
+	dvector 	lz(sage,nage);
+
+	dmatrix 	qa(1,ngear,sage,nage);
+	dmatrix    	phik(1,ngroup,1,ngear);
+
+	lambda=1.0;
+
+	for(iter=1;iter<=narea;iter++){
+
+		for(g=1;g<=ngroup;g++)
+		{ 
+			for(f=1;f<=narea;f++)
+			{
+				for(h=1;h<=nsex;h++)
+				{
+					ig = pntr_ags(f,g,h);
+
+					va.initialize();
+					fa.initialize();
+
+					for(j=sage;j<=nage;j++)
+					{
+						ma(j) = value(mean(trans(M(ig))(j)));
+						//fec(j) = value(mean( trans(d3_wt_mat(ig))(j) ));
+					}
+					
+					for(k=1;k<=ngear;k++)
+					{
+						fe = fbar * lambda(k);
+						va = value(mfexp(log_sel(k)(ig)(nyr)));
+						fa += fe * va;	
+						
+					}				
+					za = ma + fa;
+					sa = mfexp(-za);
+					oa = 1.0 - sa;	
+
+					lz(sage) = 1.0;
+					for(j=sage+1;j<=nage;j++)
+					{
+						lz(j) = lz(j-1) * mfexp(-za(j-1));
+					}
+					lz(nage) /= 1.0 - mfexp(-za(nage));
+
+					
+					for(k=1;k<=ngear;k++)
+					{
+						qa(k) = (elem_div(elem_prod(elem_prod(va, d3_wt_avg(ig)(nyr+1)),oa),za));
+						//pa(k,) = elem_div(elem_prod(va,oa),za);
+						phik(g,k) = lz * qa(k);
+					}
+				}
+			}
+		}
+
+		
+		lamt = elem_div(dAllocation, (phik(g)/sum(phik(g))));
+		lambda = lamt/mean(lamt);
+
+	}
+
+
+
+
+	 
+
+
+
+FUNCTION calcSpr
+	/**
+	 * @brief Calculate SPR in the last year
+	 * @details [long description
+	 */
+	 //SPR=phi.e/phi.E
+	 int g,f,h,ig,j,k;
+
+	dvar_vector     lx(sage,nage);
+	dvar_vector     lw(sage,nage);  
+	dvar_vector     lz(sage,nage);
+	dvar_vector 	fec(sage,nage);
+	dvar_vector 	fa(sage,nage);
+	dvar_vector 	va(sage,nage);
+	dvar_vector 	ma(sage,nage);
+
+
+	for(g=1;g<=ngroup;g++)
+	{ 	
+		lx.initialize();
+		lw.initialize();
+		lz.initialize();
+		
+	
+		lw(sage) = 1.0;
+		lx(sage) = 1.0;
+		lz(sage) = 1.0;
+
+		for(f=1;f<=narea;f++)
+		{
+			for(h=1;h<=nsex;h++)
+			{
+				ig = pntr_ags(f,g,h);
+
+				va.initialize();
+				fa.initialize();
+				for(k=1;j<=ngear;j++)
+				{
+					va = mfexp(log_sel(k)(ig)(nyr));		
+					fa += ft(ig)(k)(nyr) * va;
+					
+				}
+
+				// | Step 1. average natural mortality rate at age.
+				// | Step 2. calculate survivorship
+				for(j=sage;j<=nage;j++)
+				{
+					ma(j) = mean(trans(M(ig))(j));
+					fec(j) = mean( trans(d3_wt_mat(ig))(j) );
+					if(j > sage)
+					{
+						lx(j) = lx(j-1) * mfexp(-ma(j-1));
+						lz(j) = lz(j-1) * mfexp(-ma(j-1)-fa(j-1));
+					}
+					lw(j) = lx(j) * mfexp(-ma(j)*d_iscamCntrl(13));
+				}
+				lx(nage) /= 1.0 - mfexp(-ma(nage));
+				lw(nage) /= 1.0 - mfexp(-ma(nage));
+				lz(nage) /= 1.0 - mfexp(-ma(nage)-fa(nage));
+				
+				// | Step 3. calculate average spawing biomass per recruit.
+				phiE(g) += 1./(narea*nsex) * lw*fec;
+				phie(g) += 1./(narea*nsex) * lz*fec;
+				
+				spr(g)=phie(g)/phiE(g);
+				
+			}
+								
+		}
+
+			
+	}
+
+		
+
+
 FUNCTION void runMSE()
 	cout<<"Start of runMSE"<<endl;
 	
