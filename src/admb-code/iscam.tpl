@@ -403,6 +403,8 @@ DATA_SECTION
 	//init_ivector catch_type(1,ngear);
 
 	ivector fsh_flag(1,ngear);
+
+
 	LOC_CALCS
 		dAllocation = dAllocation/sum(dAllocation);
 		for(k=1;k<=ngear;k++)
@@ -414,15 +416,31 @@ DATA_SECTION
 		}
 		nfleet = sum(fsh_flag);
 	END_CALCS
-	
+
+	vector  fleetAllocation(1,nfleet);
 	ivector nFleetIndex(1,nfleet);
+
+
+
 	LOC_CALCS
+
+		fleetAllocation.initialize();
 		j = 1;
+		int jj = 1;
 		for(k=1; k<=ngear;k++)
 		{
-			if(fsh_flag(k)) nFleetIndex(j++) = k;
+			
+			if(fsh_flag(k)){
+				 nFleetIndex(j++) = k;
+				 cout<<"nFleetIndex \t"<<nFleetIndex<<endl;
+				 fleetAllocation(jj) = dAllocation(k);
+				 jj++;
+				}
+			
 		}
-		// cout<<"nFleetIndex index\t"<<nFleetIndex<<endl;
+		 cout<<"nFleetIndex index\t"<<nFleetIndex<<endl;
+		 cout<<"fleetAllocation \t"<<fleetAllocation<<endl;
+		 //exit(1);
 	END_CALCS
 	
 	
@@ -1786,7 +1804,8 @@ PARAMETER_SECTION
     // | - tau         -> STD of the process errors (recruitment deviations).
 	// | - phiE 	   -> per recruit yield at unfished equilibrium -- analogous to phib but group-specific
  	// | - phie 	   -> per recruit yield at fished conditions -- 
-	// | - spr 		   ->
+	// | - spr 		   -> SPR ratio
+	// | - fspr 	   -> avetage (over gears) F that will lead to SPR target
 	// |
 
 	vector        ro(1,ngroup);
@@ -1811,6 +1830,8 @@ PARAMETER_SECTION
   	vector phie(1,ngroup);
 	vector phiE(1,ngroup);
 	vector spr(1,ngroup);
+
+	matrix fspr(1,ngroup,1,nfleet);
 	
 	// |---------------------------------------------------------------------------------|
 	// | MATRIX OBJECTS
@@ -5093,14 +5114,15 @@ REPORT_SECTION
 		cout<<"Finished calcReferencePoints"<<endl;
 
 		cout<<"Calculating SPR current"<<endl;
-		calcSpr();
-		cout<<"Finished calcSpr"<<endl;
+		calcSprRatio();
+		cout<<"Finished calcSprRatio"<<endl;
 		//exit(1);
 		REPORT(bo);
 		REPORT(fmsy);
 		REPORT(msy);
 		REPORT(bmsy);
 		REPORT(spr);
+		REPORT(fspr);
 		// REPORT(Umsy);
 	}
 
@@ -5219,7 +5241,7 @@ FUNCTION mcmc_output
 	 * unfished conditions.
 	 */
 
-FUNCTION void calcSprTarget(double fbar)
+FUNCTION dvector calcEqLambda(double fbar)
 	/**
 	 * @brief Calculate the F that will lead to an SPR ratio (SPRcurrent/SPFunfished) equal to SPR target
 	 * @details This routine require that the allocation between gears is set before the assessment model is run
@@ -5229,8 +5251,9 @@ FUNCTION void calcSprTarget(double fbar)
 	//fbar.fill_seqadd(0,0.01);
 
 	int iter,g,f,h,ig;
-	dvector lambda(1,ngear);
-	dvector lamt(1,ngear);
+	dvector lambda(1,nfleet);
+	dvector lamt(1,nfleet);
+	dvector fk(1,nfleet);
 	
 	dvector 	va(sage,nage);
 	dvector 	ma(sage,nage);
@@ -5240,16 +5263,137 @@ FUNCTION void calcSprTarget(double fbar)
 	dvector 	fe(sage,nage);
 	dvector 	fa(sage,nage);
 	dvector 	lz(sage,nage);
+	dvector 	lw(sage,nage);
+	dvector 	lx(sage,nage);
+	dvector 	fec(sage,nage);
 
-	dmatrix 	qa(1,ngear,sage,nage);
-	dmatrix    	phik(1,ngroup,1,ngear);
+	dmatrix 	qa(1,nfleet,sage,nage);
+	dmatrix    	phik(1,ngroup,1,nfleet);
 
 	lambda=1.0;
 
-	for(iter=1;iter<=narea;iter++){
+
+
+	for(iter=1;iter<=2;iter++)
+	{
 
 		for(g=1;g<=ngroup;g++)
 		{ 
+			lz.initialize();
+			qa.initialize();
+			
+			ma.initialize();
+			za.initialize();
+			sa.initialize();
+			oa.initialize();
+			
+			for(f=1;f<=narea;f++)
+			{
+				for(h=1;h<=nsex;h++)
+				{
+					ig = pntr_ags(f,g,h);	
+					fa.initialize();
+
+					for(j=sage;j<=nage;j++)
+					{
+						ma(j) = value(mean(trans(M(ig))(j)));
+					}
+					
+					for(k=1;k<=nfleet;k++)
+					{
+						va.initialize();
+						fe.initialize();
+						fe = fbar * lambda(k);
+						va = value(mfexp(log_sel(k)(ig)(nyr)));
+						fa += fe * va;					
+					}				
+					za = ma + fa;
+					sa = mfexp(-za);
+					oa = 1.0 - sa;	
+
+					lz(sage) = 1.0;
+					
+					for(j=sage+1;j<=nage;j++)
+					{
+						lz(j) = lz(j-1) * mfexp(-za(j-1));
+					}
+
+					lz(nage) /= 1.0 - mfexp(-za(nage));
+
+						
+					for(k=1;k<=nfleet;k++)
+					{
+						qa(k) = (elem_div(elem_prod(elem_prod(va, d3_wt_avg(ig)(nyr+1)),oa),za));
+						//pa(k,) = elem_div(elem_prod(va,oa),za);
+						phik(g,k) = lz * qa(k);
+					}		
+				}
+			}
+
+
+			lamt = elem_div(fleetAllocation, (phik(g)/sum(phik(g))));
+			lambda = lamt/mean(lamt);
+		}
+		
+	}
+
+	fk = lambda*fbar;
+
+	return(fk);
+
+
+
+
+
+
+	 
+
+
+
+FUNCTION calcSprRatio
+	/**
+	 * @brief Calculate SPR in the last year
+	 * @details [long description
+	 * TODO read in SPR target
+	 */
+	 //SPR=phi.e/phi.E
+	 int g,f,h,ig,j,k,it,gg,itt;
+
+	dvector     lx(sage,nage);
+	dvector     lw(sage,nage);  
+	dvector     lz(sage,nage);
+	dvector 	fec(sage,nage);
+	dvector 	fa(sage,nage);
+	dvector 	va(sage,nage);
+	dvector 	ma(sage,nage);
+	dvector 	fe(1,nfleet);
+	dvector 	sol(1,ngroup);
+
+
+	dvector fbars(1,4001);
+	fbars.fill_seqadd(0,0.001);
+
+
+	int NF=size_count(fbars);
+
+	dmatrix allspr(1,ngroup,1,NF);
+	dmatrix allphie(1,ngroup,1,NF);
+	dmatrix diffspr(1,ngroup,1,NF);
+
+	for(it=1;it<=NF;it++)
+	{
+		for(g=1;g<=ngroup;g++)
+		{ 
+			
+			lx.initialize();
+			lw.initialize();
+			lz.initialize();
+		
+	
+			lw(sage) = 1.0;
+			lx(sage) = 1.0;
+			lz(sage) = 1.0;
+
 			for(f=1;f<=narea;f++)
 			{
 				for(h=1;h<=nsex;h++)
@@ -5259,126 +5403,80 @@ FUNCTION void calcSprTarget(double fbar)
 					va.initialize();
 					fa.initialize();
 
+					fe = calcEqLambda(fbars(it));
+					
+					for(k=1;k<=nfleet;k++)
+					{
+						va = value(mfexp(log_sel(nFleetIndex(k))(ig)(nyr)));
+						fa += fe(k) * va;
+					}
+
+					// | Step 1. average natural mortality rate at age.
+					// | Step 2. calculate survivorship
 					for(j=sage;j<=nage;j++)
 					{
 						ma(j) = value(mean(trans(M(ig))(j)));
-						//fec(j) = value(mean( trans(d3_wt_mat(ig))(j) ));
-					}
-					
-					for(k=1;k<=ngear;k++)
-					{
-						fe = fbar * lambda(k);
-						va = value(mfexp(log_sel(k)(ig)(nyr)));
-						fa += fe * va;	
-						
-					}				
-					za = ma + fa;
-					sa = mfexp(-za);
-					oa = 1.0 - sa;	
-
-					lz(sage) = 1.0;
-					for(j=sage+1;j<=nage;j++)
-					{
-						lz(j) = lz(j-1) * mfexp(-za(j-1));
-					}
-					lz(nage) /= 1.0 - mfexp(-za(nage));
-
-					
-					for(k=1;k<=ngear;k++)
-					{
-						qa(k) = (elem_div(elem_prod(elem_prod(va, d3_wt_avg(ig)(nyr+1)),oa),za));
-						//pa(k,) = elem_div(elem_prod(va,oa),za);
-						phik(g,k) = lz * qa(k);
-					}
-				}
-			}
-		}
-
-		
-		lamt = elem_div(dAllocation, (phik(g)/sum(phik(g))));
-		lambda = lamt/mean(lamt);
-
-	}
-
-
-
-
-	 
-
-
-
-FUNCTION calcSpr
-	/**
-	 * @brief Calculate SPR in the last year
-	 * @details [long description
-	 */
-	 //SPR=phi.e/phi.E
-	 int g,f,h,ig,j,k;
-
-	dvar_vector     lx(sage,nage);
-	dvar_vector     lw(sage,nage);  
-	dvar_vector     lz(sage,nage);
-	dvar_vector 	fec(sage,nage);
-	dvar_vector 	fa(sage,nage);
-	dvar_vector 	va(sage,nage);
-	dvar_vector 	ma(sage,nage);
-
-
-	for(g=1;g<=ngroup;g++)
-	{ 	
-		lx.initialize();
-		lw.initialize();
-		lz.initialize();
-		
+						fec(j) = (mean(trans(d3_wt_mat(ig))(j) ));
 	
-		lw(sage) = 1.0;
-		lx(sage) = 1.0;
-		lz(sage) = 1.0;
-
-		for(f=1;f<=narea;f++)
-		{
-			for(h=1;h<=nsex;h++)
-			{
-				ig = pntr_ags(f,g,h);
-
-				va.initialize();
-				fa.initialize();
-				for(k=1;j<=ngear;j++)
-				{
-					va = mfexp(log_sel(k)(ig)(nyr));		
-					fa += ft(ig)(k)(nyr) * va;
-					
-				}
-
-				// | Step 1. average natural mortality rate at age.
-				// | Step 2. calculate survivorship
-				for(j=sage;j<=nage;j++)
-				{
-					ma(j) = mean(trans(M(ig))(j));
-					fec(j) = mean( trans(d3_wt_mat(ig))(j) );
-					if(j > sage)
-					{
-						lx(j) = lx(j-1) * mfexp(-ma(j-1));
-						lz(j) = lz(j-1) * mfexp(-ma(j-1)-fa(j-1));
+						if(j > sage)
+						{
+							lx(j) = lx(j-1) * mfexp(-ma(j-1));
+							lz(j) = lz(j-1) * mfexp(-ma(j-1)-fa(j-1));
+						}
+						lw(j) = lx(j) * mfexp(-ma(j)*d_iscamCntrl(13));
 					}
-					lw(j) = lx(j) * mfexp(-ma(j)*d_iscamCntrl(13));
-				}
-				lx(nage) /= 1.0 - mfexp(-ma(nage));
-				lw(nage) /= 1.0 - mfexp(-ma(nage));
-				lz(nage) /= 1.0 - mfexp(-ma(nage)-fa(nage));
+					lx(nage) /= 1.0 - mfexp(-ma(nage));
+					lw(nage) /= 1.0 - mfexp(-ma(nage));
+					lz(nage) /= 1.0 - mfexp(-ma(nage)-fa(nage));
+					
 				
-				// | Step 3. calculate average spawing biomass per recruit.
-				phiE(g) += 1./(narea*nsex) * lw*fec;
-				phie(g) += 1./(narea*nsex) * lz*fec;
-				
-				spr(g)=phie(g)/phiE(g);
-				
+					// | Step 3. calculate average spawing biomass per recruit.
+		
+				}				
 			}
-								
+			phiE(g) += 1./(narea*nsex) * lw*fec;
+
+			allphie(g)(it) += 1./(narea*nsex) * lz*fec;
+			
+			allspr(g)(it)=value(allphie(g)(it)/phiE(g));
+			//cout<<"allspr(g)(it) is "<<allspr(g)(it)<<endl;
+			diffspr(g)(it) = (allspr(g)(it)-0.40)*(allspr(g)(it)-0.40); //SPR target fixed at 40% for now
+			
+			
 		}
+		
+		
 
 			
 	}
+	//cout<<"diffspr(g)(it) is "<<diffspr<<endl;
+
+
+	for(gg=1;gg<=ngroup;gg++)
+		{	
+			sol(gg)=min(diffspr(gg));
+		}
+
+
+
+	for(itt=1; itt<=NF; itt++)
+	{
+
+		for(gg=1;gg<=ngroup;gg++)
+		{
+			
+			//sol(gg)=max(diffspr(gg)); 
+			if(sol(gg)==diffspr(gg)(itt)){
+				spr(gg) = allspr(gg)(itt);
+				
+				phie(gg)= allphie(gg)(itt);
+				fspr(gg) = calcEqLambda(fbars(itt));
+	
+			} 
+		}
+	}
+
+ 	
 
 		
 
