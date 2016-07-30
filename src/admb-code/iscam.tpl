@@ -879,6 +879,7 @@ DATA_SECTION
 				// Insert calculations for ALK here.
 			}
 		}
+		//cout<<"d3_wt_mat "<<d3_wt_mat<<endl;
 
 		// the overwrite d3_wt_avg & d3_wt_mat with existing empirical data
 		// SM Sept 6, 2013. Added option of using NA values (-99.0) for
@@ -931,6 +932,8 @@ DATA_SECTION
 				}
 			}
 		}
+
+
 		//}
 		
 
@@ -944,7 +947,7 @@ DATA_SECTION
 			d3_len_age(ig)(nyr+1) = pow(dWt_bar(ig)/d_a(ig),1./d_b(ig));
 		}
 		
-		
+
 		// deviations in mean weight-at-age
 		for(ig=1;ig<=n_ags;ig++)
 		{
@@ -1409,13 +1412,19 @@ DATA_SECTION
 		verbose = d_iscamCntrl(1);
 		if(verbose) COUT(d_iscamCntrl);
 		
-		for(int ig=1;ig<=n_ags;ig++)
-		{
-			for(int i = syr; i <= nyr; i++)
-			{
-				d3_wt_mat(ig)(i) = pow(d3_wt_mat(ig)(i),d_iscamCntrl(6));
-			}
-		}
+		// WTF is this??? d_iscamCntrl(6))i s the minimum proportion to be considered in dmvlogistic.
+		//makes no sense to CW so I'm commenting it out
+		//for(int ig=1;ig<=n_ags;ig++)
+		//{
+		//	for(int i = syr; i <= nyr; i++)
+		//	{
+		//		d3_wt_mat(ig)(i) = pow(d3_wt_mat(ig)(i),d_iscamCntrl(6));
+		//	}
+		//}
+
+		//cout<<"d3_wt_mat "<<d3_wt_mat<<endl;
+		//exit(1);
+		
 
 
 
@@ -1831,6 +1840,8 @@ PARAMETER_SECTION
 	vector phiE(1,ngroup);
 	vector spr(1,ngroup);
 
+	//matrix allspr(1,ngroup,1,4001); 
+	//matrix diffspr(1,ngroup,1,4001);
 	matrix fspr(1,ngroup,1,nfleet);
 	
 	// |---------------------------------------------------------------------------------|
@@ -5123,6 +5134,8 @@ REPORT_SECTION
 		REPORT(bmsy);
 		REPORT(spr);
 		REPORT(fspr);
+		//REPORT(allspr);
+		//REPORT(diffspr);
 		// REPORT(Umsy);
 	}
 
@@ -5362,6 +5375,7 @@ FUNCTION calcSprRatio
 	dvector     lx(sage,nage);
 	dvector     lw(sage,nage);  
 	dvector     lz(sage,nage);
+	dvector     lzw(sage,nage);
 	dvector 	fec(sage,nage);
 	dvector 	fa(sage,nage);
 	dvector 	va(sage,nage);
@@ -5371,7 +5385,7 @@ FUNCTION calcSprRatio
 
 
 	dvector fbars(1,4001);
-	fbars.fill_seqadd(0,0.001);
+	fbars.fill_seqadd(0.000,0.001);
 
 
 	int NF=size_count(fbars);
@@ -5382,17 +5396,21 @@ FUNCTION calcSprRatio
 
 	for(it=1;it<=NF;it++)
 	{
+
+		phiE.initialize();
 		for(g=1;g<=ngroup;g++)
 		{ 
 			
 			lx.initialize();
 			lw.initialize();
 			lz.initialize();
+			lzw.initialize();
 		
 	
 			lw(sage) = 1.0;
 			lx(sage) = 1.0;
 			lz(sage) = 1.0;
+			lzw(sage) = 1.0;
 
 			for(f=1;f<=narea;f++)
 			{
@@ -5424,19 +5442,24 @@ FUNCTION calcSprRatio
 							lz(j) = lz(j-1) * mfexp(-ma(j-1)-fa(j-1));
 						}
 						lw(j) = lx(j) * mfexp(-ma(j)*d_iscamCntrl(13));
+						lzw(j) = lz(j) * mfexp(-(ma(j)+fa(j))*d_iscamCntrl(13));
 					}
 					lx(nage) /= 1.0 - mfexp(-ma(nage));
 					lw(nage) /= 1.0 - mfexp(-ma(nage));
 					lz(nage) /= 1.0 - mfexp(-ma(nage)-fa(nage));
+					lzw(nage) /= 1.0 - mfexp(-ma(nage)-fa(nage));
 					
 				
 					// | Step 3. calculate average spawing biomass per recruit.
 		
 				}				
 			}
-			phiE(g) += 1./(narea*nsex) * lw*fec;
+			phiE(g) = 1./(narea*nsex) * lw*fec;
 
-			allphie(g)(it) += 1./(narea*nsex) * lz*fec;
+			allphie(g)(it) = 1./(narea*nsex) * lzw*fec;
+
+			//cout<<"phiE(g) is "<<phiE(g)<<endl;
+			//cout<<"allphie(g)(it)  is "<<allphie(g)(it) <<endl;
 			
 			allspr(g)(it)=value(allphie(g)(it)/phiE(g));
 			//cout<<"allspr(g)(it) is "<<allspr(g)(it)<<endl;
@@ -5449,12 +5472,13 @@ FUNCTION calcSprRatio
 
 			
 	}
+	//cout<<"allspr(g)(it) is "<<allspr<<endl;
 	//cout<<"diffspr(g)(it) is "<<diffspr<<endl;
-
+	//exit(1);
 
 	for(gg=1;gg<=ngroup;gg++)
 		{	
-			sol(gg)=min(diffspr(gg));
+			sol(gg)=(min(diffspr(gg)));
 		}
 
 
