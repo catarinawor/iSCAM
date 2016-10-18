@@ -586,6 +586,7 @@ DATA_SECTION
 			//if(verbose)  cout<<"Ok after reading catch data"<<ii<<" "<<ig <<" "<<n_ags<<endl;
 		}
 
+
 		
 	END_CALCS
 	
@@ -649,6 +650,7 @@ DATA_SECTION
 		// {
 		// 	it_se(k) = it_se(k)/tmp_mu;
 		// }
+
 	END_CALCS
 
 	// |---------------------------------------------------------------------------------|
@@ -676,6 +678,8 @@ DATA_SECTION
 	init_3darray d3_A(1,nAgears,1,n_A_nobs,n_A_sage-6,n_A_nage);
 	3darray d3_A_obs(1,nAgears,1,n_A_nobs,n_A_sage,n_A_nage);
 	LOC_CALCS
+
+
 		if( n_A_nobs(nAgears) > 0 && n_A_nobs(nAgears) > 3)
 		{
 			if(!mseFlag  && verbose)
@@ -706,6 +710,7 @@ DATA_SECTION
 			cout<<"| NO AGE OR LENGTH DATA   |"<<endl;
 			cout<<"| ----------------------- |"<<endl;
 		}
+
 	END_CALCS
 
 	// |---------------------------------------------------------------------------------|
@@ -842,6 +847,8 @@ DATA_SECTION
 				}
 			}
 		}
+
+
 	END_CALCS
 
 	matrix  dWt_bar(1,n_ags,sage,nage);
@@ -1004,6 +1011,7 @@ DATA_SECTION
 		cout<<"|___________________________|"<<endl;
 		exit(1);
 	  }
+
 	END_CALCS
 
 	
@@ -1062,6 +1070,7 @@ DATA_SECTION
 		ipar_vector(6,7) = ngroup;
 		ipar_vector(3)   = n_gs;
 		ipar_vector(4,5) = n_ag;
+
 	END_CALCS
 	
 	// |---------------------------------------------------------------------------------|
@@ -1226,6 +1235,8 @@ DATA_SECTION
 		} 
 		// COUT(slx_nrow);
 		// cout<<"Ok after new selex stuff in data section"<<endl;
+		
+
 	END_CALCS
 
 
@@ -1348,6 +1359,8 @@ DATA_SECTION
 				default: break;
 			}
 		}
+
+
 	END_CALCS
 	
 	// |--------------------------------------------------|
@@ -1577,6 +1590,8 @@ DATA_SECTION
 				}
 			break;
 		}
+
+
 	END_CALCS
 
 	// !! COUT((n_saa));
@@ -1999,6 +2014,7 @@ PROCEDURE_SECTION
 	calcSurveyObservations();
 	
 	calcStockRecruitment();
+	
 	
 	calcObjectiveFunction();
 
@@ -3476,6 +3492,8 @@ FUNCTION calcObjectiveFunction
 // 	double o=1.e-10;
 
 	nlvec.initialize();
+
+
 	
 	// |---------------------------------------------------------------------------------|
 	// | LIKELIHOOD FOR CATCH DATA
@@ -3500,6 +3518,8 @@ FUNCTION calcObjectiveFunction
 			nlvec(1) += dnorm(eta(i),0.0,1.0*sig_scaler);
 		}
 	}
+
+
 
 
 	// |---------------------------------------------------------------------------------|
@@ -3551,6 +3571,7 @@ FUNCTION calcObjectiveFunction
 	A_nu.initialize();
 	for(k=1;k<=nAgears;k++)
 	{	
+		
 		if( n_A_nobs(k)>0 )
 		{
 			//int n_naa = 0;		//retrospective counter
@@ -3574,9 +3595,7 @@ FUNCTION calcObjectiveFunction
 					ii ++;
 				}
 			}
-	
-	
-
+			
 
 			
 			//dmatrix     O = trans(trans(d3_A_obs(k)).sub(n_A_sage(k),n_A_nage(k))).sub(iaa,naa);
@@ -3585,13 +3604,23 @@ FUNCTION calcObjectiveFunction
 			
 			// | Choose form of the likelihood based on d_iscamCntrl(14) switch
 			//switch(int(d_iscamCntrl(14)))
+
+
+
 			logistic_normal cLN_Age( O,P,dMinP(k),dEps(k) );
+			
+			//cout<<"cLN_Age is "<<cLN_Age<<endl;
+
 			logistic_student_t cLST_Age( O,P,dMinP(k),dEps(k) );
+
+
+
 			switch( int(nCompLikelihood(k)) )
 			{
 				case 1:	// multivariate Logistic
+					
 					nlvec(4,k) = dmvlogistic(O,P,nu,age_tau2(k),dMinP(k));
-					// cout<<"like: "<<ell<<" "<<nlvec(4,k)<<endl;
+					//cout<<"like: "<<endl<<" "<<nlvec(4,k)<<endl;
 					// ptr_AgeCompLike[k-1] = new acl::multivariteLogistic<dvariable,dmatrix,dvar_matrix>(O,P,dMinP(k)); 
 					// nlvec(4,k)      = ptr_AgeCompLike[k-1] -> nloglike();
 					// nu              = ptr_AgeCompLike[k-1] -> residual();
@@ -3682,6 +3711,7 @@ FUNCTION calcObjectiveFunction
 				break;
 			}
 			
+			
 			// | Extract residuals.
 			for(i=n_saa(k);i<=n_naa(k);i++)
 			{
@@ -3698,6 +3728,7 @@ FUNCTION calcObjectiveFunction
 			}
 		}
 	}
+
 
 	//if(ptr_AgeCompLike != NULL)
 	//{
@@ -4858,16 +4889,16 @@ FUNCTION writeSimulatedDataFile
   }
 
 
+FUNCTION TAC_input
+	{
+	/**
+  	Purpose:  This function writes out input variables that would be used in the 
+  	calculation of catch limits in the lagrangian model MSE
 
-  	/**
-  	Purpose:  This function returns a modified selectivity vector (va) based on
-  			  the assumption that age-based selectivity will operate on the principle
-  	          of ideal free distribution.
-  	Author: Steven Martell
+  	Author: Catarina Wor
   	
   	Arguments:
-  	\param	va -> age-specific vulnerability
-  	\param	ba -> age-specific biomass (relative abundance is fine)
+  	\param	seed -> the random number seed that is concatenated into the file name.
   	
   	NOTES:
   		
@@ -4875,6 +4906,47 @@ FUNCTION writeSimulatedDataFile
   	TODO list:
   	[ ] 
   	*/
+	
+	ofstream bfs("/Users/catarinawor/Documents/Lagrangian/OM/TAC_input.dat");
+	bfs<<"#fspr" << endl << fspr <<endl;
+
+	// 4darray log_sel(1,ngear,1,n_ags,syr,nyr,sage,nage);
+	bfs<<"# log_selectivity"<<endl;
+	for(int k = 1; k <= ngear; k++ )	
+	{
+		for(int ig = 1; ig <= n_ags; ig++){
+			bfs<<mfexp(log_sel(k)(ig)(nyr))<<endl;
+		}
+	}
+
+	// 3darray N(1,n_ags,syr,nyr,sage,nage);
+	bfs<<"# Numbers at age"<<endl;
+	for(int ig = 1; ig <= n_ags; ig++){
+			bfs<<N(ig)(nyr)(sage,nage)<<endl;
+	}
+	
+	bfs<<"#Bo" << endl << bo<<endl;
+	
+	bfs<<"#ytB" << endl;
+	for(int g = 1; g <= ngroup; g++){
+		bfs<<bt(g)(nyr)<<endl;
+	}
+
+	
+
+	//ofs<<"#seltotal" << endl << seltotal(nyr)(sage,nage) <<endl;	
+	//ofs<<"#yNage" << endl << yNage(nyr)(sage,nage) <<endl;	
+	//ofs<<"#Bo" << endl << Bo<<endl;
+	//ofs<<"#ytB" << endl << ytB(nyr) <<endl;
+	}
+
+
+
+
+
+
+
+  	
 FUNCTION dvector ifdSelex(const dvector& va, const dvector& ba, const double& mpow)
   {
 
@@ -5384,6 +5456,7 @@ FUNCTION calcSprRatio
 	dvector 	sol(1,ngroup);
 
 
+	
 	dvector fbars(1,4001);
 	fbars.fill_seqadd(0.000,0.001);
 
